@@ -3,6 +3,7 @@ from django.views.generic import View
 from django.contrib import messages
 from validate_email import validate_email
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
 
 
 class RegistrationView(View):
@@ -54,7 +55,7 @@ class RegistrationView(View):
         user.set_password(password)
         user.first_name = ''
         user.last_name = ''
-        user.is_active = False
+        user.is_active = True
         user.save()
 
         # messages.add_message(request, messages.SUCCESS, 'account created successfully')
@@ -68,28 +69,52 @@ class LoginView(View):
     def get(self, request):
         return render(request, 'auth/login.html')
 
-    #
-    #   return render(request, 'auth/register.html', context=context)
-    #
-    #     current_site = get_current_site(request)
-    #     email_subject = 'Active your Account'
-    #     message = render_to_string('auth/activate.html',
-    #                                {
-    #                                    'user': user,
-    #                                    'domain': current_site.domain,
-    #                                    'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-    #                                    'token': generate_token.make_token(user)
-    #                                }
-    #                                )
-    #
-    #     email_message = EmailMessage(
-    #         email_subject,
-    #         message,
-    #         settings.EMAIL_HOST_USER,
-    #         [email]
-    #     )
-    #
-    #     EmailThread(email_message).start()
+    def post(self, request):
+        context = {
+            'data': request.POST,
+            'has_error': False
+        }
 
-    #
-    #
+        # Getting user credentials
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        # Check if user email is empty
+        if not username:
+            messages.add_message(request, messages.ERROR, 'Enter username')
+            context['has_error'] = True
+
+        # Check if password is empty
+        if not password:
+            messages.add_message(request, messages.ERROR, 'Enter password')
+            context['has_error'] = True
+
+        # If something is already wrong - no need to check credentials
+        if context['has_error']:
+            return render(request, 'auth/login.html', status=401, context=context)
+
+        # Otherwise try to authenticate user with provided info
+        user = authenticate(request, username=username, password=password)
+
+        # User authentication error (not found or wrong password)
+        if not user and not context['has_error']:
+            messages.add_message(request, messages.ERROR, 'Invalid username and/or password')
+            context['has_error'] = True
+            return render(request, 'auth/login.html', status=401, context=context)
+
+        # If we are here - everything went right
+        # Login user and redirect him to home page
+        login(request, user)
+        return render(request, 'home.html', context=context)
+
+
+class HomeView(View):
+    '''
+    Managers Home page realisation
+    '''
+    def get(self, request):
+        return render(request, 'home.html')
+
+
+
+
