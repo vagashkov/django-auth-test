@@ -3,7 +3,7 @@ from django.views.generic import View
 from django.contrib import messages
 from validate_email import validate_email
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 
 
 class RegistrationView(View):
@@ -47,7 +47,7 @@ class RegistrationView(View):
 
         # If data is not valid - reopen registration form
         if context['has_error']:
-            return render(request, 'auth/register.html', context)
+            return render(request, 'auth/register.html', status=401, context=context)
 
         # All checks are passed - let's create new user!
         username = request.POST.get("username")
@@ -105,7 +105,7 @@ class LoginView(View):
         # If we are here - everything went right
         # Login user and redirect him to home page
         login(request, user)
-        return render(request, 'home.html', context=context)
+        return render(request, 'home.html', status=302, context=context)
 
 
 class HomeView(View):
@@ -114,6 +114,16 @@ class HomeView(View):
     '''
     def get(self, request):
         return render(request, 'home.html')
+
+
+class LogoutView(View):
+    '''
+    Manages user logiut process
+    '''
+    def post(self, request):
+        logout(request)
+        messages.add_message(request, messages.SUCCESS, 'Logout complete')
+        return redirect('login')
 
 
 
