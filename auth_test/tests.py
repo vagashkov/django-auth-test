@@ -12,6 +12,7 @@ class BaseTest(TestCase):
         # setting up registration and login paths
         self.register_url = reverse('register')
         self.login_url = reverse('login')
+        self.logout_url = reverse('logout')
 
         # good user test info
         self.good_user = {
@@ -97,7 +98,7 @@ class LoginTest(BaseTest):
     Manages login functionality test process.
     '''
     def test_open_login_page(self):
-        # Getting registration test by reverse url
+        # Getting login page by reverse url
         response = self.client.get(self.login_url)
         # Checking if page generated successfully
         self.assertEqual(response.status_code, 200)
@@ -129,3 +130,22 @@ class LoginTest(BaseTest):
         response = self.client.post(self.login_url, {'username': 'username', 'password': 'password'}, format='text/html')
         # Check result (has to be unauthorized)
         self.assertEqual(response.status_code, 401)
+
+
+class LogoutTest(BaseTest):
+    '''
+    Manages logou functionality test process.
+    '''
+    def test_logout_action(self):
+        # Register user with proper credentials
+        self.client.post(self.register_url, self.good_user, format='text/html')
+        # Login user with the same credentials
+        response = self.client.post(self.login_url, self.good_user, format='text/html')
+        # Check for redirection after successful login (to home page)
+        self.assertEqual(response.status_code, 302)
+        # Try to logout using reverse url
+        response = self.client.post(self.logout_url)
+        # Checking if page generated successfully
+        self.assertEqual(response.status_code, 302)
+        # Check if after logout user will be redirected to login page
+        self.assertEqual(response.url, "/login")
