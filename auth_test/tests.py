@@ -118,8 +118,14 @@ class LoginTest(BaseTest):
         # Check result (has to be unauthorized)
         self.assertEqual(response.status_code, 401)
 
-    def test_cantlogin_with_no_password(self):
+    def test_failed_login_with_no_password(self):
         # Try to login user with empty password
-        response= self.client.post(self.login_url, {'username': 'passwped', 'password': ''}, format='text/html')
+        response = self.client.post(self.login_url, {'username': 'goodusername', 'password': ''}, format='text/html')
+        # Check result (has to be unauthorized)
+        self.assertEqual(response.status_code, 401)
+
+    def test_failed_login_with_wrong_username_and_password(self):
+        # Try to login user with wrong username and password
+        response = self.client.post(self.login_url, {'username': 'username', 'password': 'password'}, format='text/html')
         # Check result (has to be unauthorized)
         self.assertEqual(response.status_code, 401)
