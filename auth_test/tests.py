@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -18,7 +19,7 @@ class BaseTest(TestCase):
         self.good_user = {
             'email': 'good_user@test.com',
             'username': 'good_user',
-            'password': 'password',
+            'password1': 'password',
             'password2': 'password',
         }
 
@@ -26,7 +27,7 @@ class BaseTest(TestCase):
         self.user_short_password = {
             'email': 'short_pwd@test.com',
             'username': 'short_pwd',
-            'password': 'short',
+            'password1': 'short',
             'password2': 'short',
         }
 
@@ -34,7 +35,7 @@ class BaseTest(TestCase):
         self.user_different_passwords = {
             'email': 'diff_pwds@test.com',
             'username': 'diff_pwds',
-            'password': 'different',
+            'password1': 'different',
             'password2': 'passwords',
         }
 
@@ -42,7 +43,7 @@ class BaseTest(TestCase):
         self.user_invalid_email = {
             'email': 'test.com',
             'username': 'inv_email',
-            'password': 'invalidemail',
+            'password1': 'invalidemail',
             'password2': 'invalidemail',
         }
         return super().setUp()
@@ -60,11 +61,14 @@ class RegistrationTest(BaseTest):
         # Checking if page generated using correct template
         self.assertTemplateUsed(response, 'auth/register.html')
 
+
     def test_register_good_user(self):
         # Try to register user with valid credentials
         response = self.client.post(self.register_url, self.good_user, format='text/html')
+        # Check if user was really registered
+        users = get_user_model().objects.all()
         # Checking for redirection after successful registration
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(users.count(), 1)
 
     def test_register_short_password_user(self):
         # Try to register user with too short password

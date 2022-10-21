@@ -4,6 +4,8 @@ from django.contrib import messages
 from validate_email import validate_email
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
 
 
 class RegistrationView(View):
@@ -13,6 +15,7 @@ class RegistrationView(View):
     def get(self, request):
         return render(request, 'auth/register.html')
 
+    @method_decorator(csrf_protect)
     def post(self, request):
         context = {
             'data': request.POST,
@@ -26,14 +29,14 @@ class RegistrationView(View):
             context['has_error'] = True
 
         # Second, check password length
-        password = request.POST.get('password')
-        if len(password) < 6:
+        password1 = request.POST.get('password1')
+        if len(password1) < 6:
             messages.add_message(request, messages.ERROR, 'password has to be at least 6 characters long')
             context['has_error'] = True
 
         # Third, compare password and its confirmation
         password2 = request.POST.get('password2')
-        if password != password2:
+        if password1 != password2:
             messages.add_message(request, messages.ERROR, 'passwords dont match')
             context['has_error'] = True
 
@@ -52,13 +55,12 @@ class RegistrationView(View):
         # All checks are passed - let's create new user!
         username = request.POST.get("username")
         user = User.objects.create_user(username=username, email=email)
-        user.set_password(password)
+        user.set_password(password1)
         user.first_name = ''
         user.last_name = ''
         user.is_active = True
         user.save()
 
-        # messages.add_message(request, messages.SUCCESS, 'account created successfully')
         return redirect('login')
 
 
@@ -77,7 +79,7 @@ class LoginView(View):
 
         # Getting user credentials
         username = request.POST.get('username')
-        password = request.POST.get('password')
+        password = request.POST.get('password1')
 
         # Check if user email is empty
         if not username:
