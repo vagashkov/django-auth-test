@@ -10,29 +10,9 @@
                  <div>
                      <div></div>
                          <h3>Sign up</h3>
-                         {% if messages %}
-                             {% for message in messages %}
-                                 <div>{{message}}</div>
-                             {% endfor %}
-                         {% endif %}
                          <form action="{% url 'register' %}" method="post">
                              {% csrf_token %}
-                             <div>
-                                 <input type="email" name="email" value="{{data.email}}" placeholder="Email">
-                             </div>
-                             <br>
-                             <div>
-                                 <input type="text" name="username" value="{{data.username}}" placeholder="Username">
-                             </div>
-                             <br>
-                             <div>
-                                 <input type="password" name="password1" value="" placeholder="Password">
-                             </div>
-                             <br>
-                             <div>
-                                 <input type="password" name="password2" value="" placeholder="Confirm Password">
-                             </div>
-                             <br>
+                             {{ form.as_p }}
                              <input type="submit" value="Register"/>
                         </form>
                  </div>

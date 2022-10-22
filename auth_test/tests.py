@@ -15,20 +15,13 @@ class BaseTest(TestCase):
         self.login_url = reverse('login')
         self.logout_url = reverse('logout')
 
-        # good user test info
-        self.good_user = {
-            'email': 'good_user@test.com',
-            'username': 'good_user',
-            'password1': 'password',
-            'password2': 'password',
-        }
-
         # user with too short password
         self.user_short_password = {
             'email': 'short_pwd@test.com',
             'username': 'short_pwd',
             'password1': 'short',
             'password2': 'short',
+            'is_agreed': 'on',
         }
 
         # user with different password and confirmation
@@ -37,6 +30,7 @@ class BaseTest(TestCase):
             'username': 'diff_pwds',
             'password1': 'different',
             'password2': 'passwords',
+            'is_agreed': 'on',
         }
 
         # user with invalid email
@@ -45,7 +39,18 @@ class BaseTest(TestCase):
             'username': 'inv_email',
             'password1': 'invalidemail',
             'password2': 'invalidemail',
+            'is_agreed': 'on',
         }
+
+        # good user test info
+        self.good_user = {
+            'email': 'good_user@test.com',
+            'username': 'good_user',
+            'password1': 'password',
+            'password2': 'password',
+            'is_agreed': 'on',
+        }
+
         return super().setUp()
 
 
@@ -61,40 +66,40 @@ class RegistrationTest(BaseTest):
         # Checking if page generated using correct template
         self.assertTemplateUsed(response, 'auth/register.html')
 
+    def test_register_short_password_user(self):
+        # Try to register user with too short password
+        response = self.client.post(self.register_url, self.user_short_password, format='text/html')
+        # Check result (return to registration page)
+        self.assertTemplateUsed(response, 'auth/register.html')
+
+    def test_register_different_passwords_user(self):
+        # Try to register user with different password and confirmation
+        response = self.client.post(self.register_url, self.user_different_passwords, format='text/html')
+        # Check result (return to registration page)
+        self.assertTemplateUsed(response, 'auth/register.html')
+
+    def test_register_invalid_email_user(self):
+        # Try to register user with invalid email
+        response = self.client.post(self.register_url, self.user_invalid_email, format='text/html')
+        # Check result (return to registration page)
+        self.assertTemplateUsed(response, 'auth/register.html')
 
     def test_register_good_user(self):
         # Try to register user with valid credentials
         response = self.client.post(self.register_url, self.good_user, format='text/html')
         # Check if user was really registered
         users = get_user_model().objects.all()
-        self.assertEqual(str(users[0]), 'good_user')
-
-
-    def test_register_short_password_user(self):
-        # Try to register user with too short password
-        response = self.client.post(self.register_url, self.user_short_password, format='text/html')
-        # Check result (has to be unauthorized)
-        self.assertEqual(response.status_code, 401)
-
-    def test_register_different_passwords_user(self):
-        # Try to register user with different password and confirmation
-        response = self.client.post(self.register_url, self.user_different_passwords, format='text/html')
-        # Check result (has to be unauthorized)
-        self.assertEqual(response.status_code, 401)
-
-    def test_register_invalid_email_user(self):
-        # Try to register user with invalid email
-        response = self.client.post(self.register_url, self.user_invalid_email, format='text/html')
-        # Check result (has to be unauthorized)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(users.count(), 1)
+        if users.count():
+            self.assertEqual(str(users[0]), 'good_user')
 
     def test_register_double_user(self):
         # Register good user
         self.client.post(self.register_url, self.good_user, format='text/html')
         # And try to register him one more time
         response = self.client.post(self.register_url, self.good_user, format='text/html')
-        # Check result (has to be unauthorized)
-        self.assertEqual(response.status_code, 401)
+        # Check result (return to registration page)
+        self.assertTemplateUsed(response, 'auth/register.html')
 
 
 class LoginTest(BaseTest):

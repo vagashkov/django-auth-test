@@ -7,61 +7,61 @@ from django.contrib.auth import authenticate, login, logout
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 
+from .forms import RegistrationForm
+
 
 class RegistrationView(View):
     '''
     Manages new user registration process.
     '''
     def get(self, request):
-        return render(request, 'auth/register.html')
+        form = RegistrationForm()
+        return render(request, 'auth/register.html', {'form': form})
 
     @method_decorator(csrf_protect)
     def post(self, request):
-        context = {
-            'data': request.POST,
-            'has_error': False
-        }
+        # Getting form data from request
+        form = RegistrationForm(request.POST)
+        has_error = False
+        # Checking if form is valid
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            password1 = form.cleaned_data['password1']
+            password2 = form.cleaned_data['password2']
 
-        # First, check user email format
-        email = request.POST.get('email')
-        if not validate_email(email):
-            messages.add_message(request, messages.ERROR, 'Please provide a valid email')
-            context['has_error'] = True
+            # First, check user email format
+            if not validate_email(email):
+                has_error = True
 
-        # Second, check password length
-        password1 = request.POST.get('password1')
-        if len(password1) < 6:
-            messages.add_message(request, messages.ERROR, 'password has to be at least 6 characters long')
-            context['has_error'] = True
+            # Second, check password length
+            if len(password1) < 6:
+                has_error = True
 
-        # Third, compare password and its confirmation
-        password2 = request.POST.get('password2')
-        if password1 != password2:
-            messages.add_message(request, messages.ERROR, 'passwords dont match')
-            context['has_error'] = True
+            # Third, compare password and its confirmation
+            if password1 != password2:
+                has_error = True
 
-        # Easy job done - now let's check user email for double registration
-        try:
-            if User.objects.get(email=email):
-                messages.add_message(request, messages.ERROR, 'Email already exists')
-                context['has_error'] = True
-        except User.DoesNotExist:
-            pass
+            # Easy job done - now let's check user email for double registration
+            try:
+                if User.objects.get(email=email):
+                    has_error = True
+            except User.DoesNotExist:
+                pass
 
-        # If data is not valid - reopen registration form
-        if context['has_error']:
-            return render(request, 'auth/register.html', status=401, context=context)
+            # If data is not valid - reopen registration form
+            if has_error:
+                return render(request, 'auth/register.html', {'form': form})
 
-        # All checks are passed - let's create new user!
-        username = request.POST.get("username")
-        user = User.objects.create_user(username=username, email=email)
-        user.set_password(password1)
-        user.first_name = ''
-        user.last_name = ''
-        user.is_active = True
-        user.save()
-
-        return redirect('login')
+            # All checks are passed - let's create new user!
+            user = User.objects.create_user(username=username, email=email)
+            user.set_password(password1)
+            user.first_name = ''
+            user.last_name = ''
+            user.is_active = True
+            user.save()
+            return redirect('login')
+        return render(request, 'auth/register.html', {'form': form})
 
 
 class LoginView(View):
