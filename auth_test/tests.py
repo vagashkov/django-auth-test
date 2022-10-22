@@ -67,8 +67,8 @@ class RegistrationTest(BaseTest):
         response = self.client.post(self.register_url, self.good_user, format='text/html')
         # Check if user was really registered
         users = get_user_model().objects.all()
-        # Checking for redirection after successful registration
-        self.assertEqual(users.count(), 1)
+        self.assertEqual(str(users[0]), 'good_user')
+
 
     def test_register_short_password_user(self):
         # Try to register user with too short password
