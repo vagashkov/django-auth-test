@@ -53,6 +53,7 @@ class RegistrationView(View):
             if has_error:
                 return render(request, 'auth/register.html', {'form': form})
 
+            print("Form data is valid - registering user...")
             # All checks are passed - let's create new user!
             user = User.objects.create_user(username=username, email=email)
             user.set_password(password1)
