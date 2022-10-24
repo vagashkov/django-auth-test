@@ -26,6 +26,7 @@ class RegistrationView(View):
     @method_decorator(csrf_protect)
     def post(self, request):
         logger = logging.getLogger(__name__)
+        now = datetime.now()
 
         # Getting form data from request
         form = RegistrationForm(request.POST)
@@ -52,6 +53,8 @@ class RegistrationView(View):
             # Easy job done - now let's check user email for double registration
             try:
                 if User.objects.get(email=email):
+                    logger.error(now.strftime(
+                        "%d/%m/%Y %H:%M:%S") + " " + logger.name + ":  User double registration")
                     has_error = True
             except User.DoesNotExist:
                 pass
@@ -59,7 +62,6 @@ class RegistrationView(View):
             # If data is not valid - reopen registration form
             if has_error:
                 # If form data is not valid - log this event and return ser back to registration page
-                now = datetime.now()
                 logger.error(now.strftime(
                     "%d/%m/%Y %H:%M:%S") + " " + logger.name + ":  User registration form data is not valid: " + str(
                     form.errors))
@@ -74,7 +76,6 @@ class RegistrationView(View):
             user.save()
             return redirect('login')
         # If form data is not valid - log this event and return ser back to registration page
-        now = datetime.now()
         logger.error(now.strftime("%d/%m/%Y %H:%M:%S") + " " + logger.name + ":  User registration form data is not valid: " + str(form.errors))
         return render(request, 'auth/register.html', {'form': form})
 
