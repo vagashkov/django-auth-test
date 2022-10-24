@@ -1,3 +1,7 @@
+import logging
+
+from datetime import datetime
+
 from django.shortcuts import render, redirect
 from django.views.generic import View
 from django.contrib import messages
@@ -14,12 +18,15 @@ class RegistrationView(View):
     '''
     Manages new user registration process.
     '''
+
     def get(self, request):
         form = RegistrationForm()
         return render(request, 'auth/register.html', {'form': form})
 
     @method_decorator(csrf_protect)
     def post(self, request):
+        logger = logging.getLogger(__name__)
+
         # Getting form data from request
         form = RegistrationForm(request.POST)
         has_error = False
@@ -51,9 +58,13 @@ class RegistrationView(View):
 
             # If data is not valid - reopen registration form
             if has_error:
+                # If form data is not valid - log this event and return ser back to registration page
+                now = datetime.now()
+                logger.error(now.strftime(
+                    "%d/%m/%Y %H:%M:%S") + " " + logger.name + ":  User registration form data is not valid: " + str(
+                    form.errors))
                 return render(request, 'auth/register.html', {'form': form})
 
-            print("Form data is valid - registering user...")
             # All checks are passed - let's create new user!
             user = User.objects.create_user(username=username, email=email)
             user.set_password(password1)
@@ -62,6 +73,9 @@ class RegistrationView(View):
             user.is_active = True
             user.save()
             return redirect('login')
+        # If form data is not valid - log this event and return ser back to registration page
+        now = datetime.now()
+        logger.error(now.strftime("%d/%m/%Y %H:%M:%S") + " " + logger.name + ":  User registration form data is not valid: " + str(form.errors))
         return render(request, 'auth/register.html', {'form': form})
 
 
