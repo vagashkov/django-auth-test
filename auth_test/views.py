@@ -3,13 +3,15 @@ import logging
 from datetime import datetime
 
 from django.shortcuts import render, redirect
-from django.views.generic import View
+from django.views.generic.base import View
 from django.contrib import messages
 from validate_email import validate_email
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.debug import sensitive_post_parameters
+from django.utils.decorators import classonlymethod
 
 from .forms import RegistrationForm
 
@@ -19,11 +21,28 @@ class RegistrationView(View):
     Manages new user registration process.
     '''
 
+    def dispatch(self, request, *args, **kwargs):
+        # Try to dispatch to the right method; if a method doesn't exist,
+        # defer to the error handler. Also defer to the error handler if the
+        # request method isn't on the approved list.
+        logger = logging.getLogger(__name__)
+        now = datetime.now()
+        logger.info(now.strftime("%d/%m/%Y %H:%M:%S") + " " + logger.name + " Got " + request.method + " request for " + request.path)
+
+        if request.method.lower() in self.http_method_names:
+            handler = getattr(
+                self, request.method.lower(), self.http_method_not_allowed
+            )
+        else:
+            handler = self.http_method_not_allowed
+        return handler(request, *args, **kwargs)
+
     def get(self, request):
         form = RegistrationForm()
         return render(request, 'auth/register.html', {'form': form})
 
     @method_decorator(csrf_protect)
+    @method_decorator(sensitive_post_parameters())
     def post(self, request):
         logger = logging.getLogger(__name__)
         now = datetime.now()
